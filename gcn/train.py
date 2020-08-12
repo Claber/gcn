@@ -15,7 +15,18 @@ tf.set_random_seed(seed)
 # Settings
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_string('dataset', 'cora', 'Dataset string.')  # 'cora', 'citeseer', 'pubmed'
+# citeseer :
+#
+#  train: 2312 nodes, each node contains some words (from a dict containing 3703 words).
+#       Numbers of words in each node sums up to 73173. Matrix 2312 * 3703
+#      6 different class tags. Matrix 2312 * 6
+#
+#   test: 1000 nodes. Numbers of words in each node sums up to 31992. Matrix 1000 * 3703
+
+#   Graph: a map: node --> neighbors of the node
+#
+
+flags.DEFINE_string('dataset', 'citeseer', 'Dataset string.')  # 'cora', 'citeseer', 'pubmed'
 flags.DEFINE_string('model', 'gcn', 'Model string.')  # 'gcn', 'gcn_cheby', 'dense'
 flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
 flags.DEFINE_integer('epochs', 200, 'Number of epochs to train.')
@@ -80,7 +91,10 @@ for epoch in range(FLAGS.epochs):
 
     t = time.time()
     # Construct feed dictionary
+    
     feed_dict = construct_feed_dict(features, support, y_train, train_mask, placeholders)
+    # print("adj =", adj[0].todense())
+    # print("adj 0 type=", type(adj[0]))
     feed_dict.update({placeholders['dropout']: FLAGS.dropout})
 
     # Training step

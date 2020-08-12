@@ -4,6 +4,7 @@ import networkx as nx
 import scipy.sparse as sp
 from scipy.sparse.linalg.eigen.arpack import eigsh
 import sys
+import functools
 
 
 def parse_index_file(filename):
@@ -42,6 +43,7 @@ def load_data(dataset_str):
     :return: All data input files loaded (as well the training/test data).
     """
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
+    print("names", names)
     objects = []
     for i in range(len(names)):
         with open("data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
@@ -54,6 +56,41 @@ def load_data(dataset_str):
     test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset_str))
     test_idx_range = np.sort(test_idx_reorder)
 
+    # x = (120, 3703)
+    # y = (120, 6)
+    # tx = (1000, 3703)
+    # ty = (1000, 6)
+    # allx = (2312, 3703)
+    # ally = (2312, 6)
+    # graph 3327 nodes, 9464/2=4732 links
+    #
+    #
+    # isolated_num = 0
+    #
+    # x1 = (120, 3703)
+    # y1 = (120, 6)
+    # there are 15 nodes in tx which are isolated
+    # tx1 = (1015, 3703)
+    # ty1 = (1015, 6)
+    # allx1 = (2312, 3703)
+    # ally1 = (2312, 6)
+
+    print("x=",x.shape)
+    print("y=",y.shape)
+    print("tx=",tx.shape)
+    print("ty=",ty.shape)
+
+    print("allx=",allx.shape)
+    print("ally=",ally.shape)
+    print("graph", len(graph), functools.reduce(lambda a,b: a + b, [len(v) for k,v in graph.items()]))
+    isolated_num = 0
+    for k, v in graph.items():
+        if len(v) == 0:
+            print('isolated:', k, v)
+            isolated_num += 1
+
+    print('isolated_num', isolated_num)
+    # test node id 排序后的相邻间隔可能不是1， 比如 test id排序后，test_idx_reorder[94] = 2406, test_idx_reorder[95] = 2408
     if dataset_str == 'citeseer':
         # Fix citeseer dataset (there are some isolated nodes in the graph)
         # Find isolated nodes, add them as zero-vecs into the right position
@@ -64,6 +101,14 @@ def load_data(dataset_str):
         ty_extended = np.zeros((len(test_idx_range_full), y.shape[1]))
         ty_extended[test_idx_range-min(test_idx_range), :] = ty
         ty = ty_extended
+
+    print("x1=", x.shape)
+    print("y1=", y.shape)
+    print("tx1=", tx.shape)
+    print("ty1=", ty.shape)
+
+    print("allx1=", allx.shape)
+    print("ally1=", ally.shape)
 
     features = sp.vstack((allx, tx)).tolil()
     features[test_idx_reorder, :] = features[test_idx_range, :]
